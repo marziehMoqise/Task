@@ -2,57 +2,21 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Driver\CitynetDriver;
-use App\Http\Driver\MoghimDriver;
-use App\Http\Driver\PartoDriver;
-use Illuminate\Support\Carbon;
+use App\Services\SearchService;
+use Illuminate\Http\JsonResponse;
 
-class SearchController
+class SearchController extends Controller
 {
-    public function search()
+    protected SearchService $searchService;
+
+    public function __construct(SearchService $searchService)
     {
-        $cityNetResults = (new CitynetDriver())->search();
-
-        $partoResults = (new PartoDriver())->src();
-
-        $moghimResults = (new MoghimDriver())->srch();
-
-        $output = [];
-
-        foreach ($cityNetResults as $cityNetResult) {
-            $output[] = [
-                'driver' => 'citynet',
-                'number' => $cityNetResult['uuid'],
-                'amount' => $cityNetResult['amount'],
-                'time' => Carbon::createFromFormat('U', $cityNetResult['amount'])->format('Y-m-d h:i:s'),
-                'from' => $cityNetResult['from'],
-                'to' => $cityNetResult['to']
-            ];
-        }
-
-        foreach ($partoResults as $partoResult) {
-            $output[] = [
-                'driver' => 'parto',
-                'number' => $partoResult['fnum'],
-                'amount' => $partoResult['amount'],
-                'time' => $partoResult['time'],
-                'from' => $partoResult['from'],
-                'to' => $partoResult['to']
-            ];
-        }
-
-        foreach ($moghimResults as $moghimResult) {
-            $output[] = [
-                'driver' => 'moghim',
-                'number' => $moghimResult['flight_number'],
-                'amount' => $moghimResult['amount'],
-                'time' => $moghimResult['time'],
-                'from' => $moghimResult['from'],
-                'to' => $moghimResult['to']
-            ];
-        }
-
-        return $output;
+        $this->searchService = $searchService;
     }
 
+    public function search(): JsonResponse
+    {
+        $output = $this->searchService->performSearch();
+        return response()->json($output);
+    }
 }
